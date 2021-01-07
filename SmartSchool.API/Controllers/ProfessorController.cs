@@ -39,6 +39,14 @@ namespace SmartSchool.API.Controllers
             return Ok(prof);
         }
 
+        [HttpGet("ByName/{id}")]
+        public IActionResult Get(string nome)
+        {
+            if (nome == null) return BadRequest("Favor informe um nome");
+            var prof = _context.Professores.AsNoTracking().FirstOrDefault(p => p.Nome == nome);
+            return Ok(prof);
+        }
+
         // POST api/<ProfessorController>
         [HttpPost]
         public IActionResult Post([FromBody] Professor professor)
@@ -81,7 +89,7 @@ namespace SmartSchool.API.Controllers
         public IActionResult Delete(int id)
         {
             if (id == 0) return BadRequest("Favor informe um Id");
-            var prof = _context.Professores.AsNoTracking().FirstOrDefault(p => p.Id == id);
+            var prof = _context.Professores.FirstOrDefault(p => p.Id == id);
             if (prof == null) return BadRequest("Professor não encontrado");
             _context.Remove(prof);
             _context.SaveChanges();
