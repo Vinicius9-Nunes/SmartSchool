@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartSchool.API.Data;
+using SmartSchool.API.DTOs;
 using SmartSchool.API.Models;
 using System;
 using System.Collections.Generic;
@@ -15,10 +17,12 @@ namespace SmartSchool.API.Controllers
     public class ProfessorController : ControllerBase
     {
         private readonly IRepository _repository;
+        private readonly IMapper _mapper;
 
-        public ProfessorController(IRepository repository)
+        public ProfessorController(IRepository repository, IMapper mapper)
         {
             _repository = repository;
+            _mapper = mapper;
         }
 
         // GET: api/<ProfessorController>
@@ -27,7 +31,7 @@ namespace SmartSchool.API.Controllers
         {
             var prof = _repository.GetAllProfessor(true);
             if (prof == null) return BadRequest("Não há nenhum professor");
-            return Ok(prof);
+            return Ok(_mapper.Map<IEnumerable<ProfessorDTO>>(prof));
         }
 
         // GET api/<ProfessorController>/5
@@ -37,7 +41,7 @@ namespace SmartSchool.API.Controllers
             if (id == 0) return BadRequest("Favor informe um Id valido.");
             var prof = _repository.GetProfessorById(id, true);
             if(prof == null) return BadRequest("Professor não encontrado");
-            return Ok(prof);
+            return Ok(_mapper.Map<ProfessorDTO>(prof));
         }
 
         // POST api/<ProfessorController>
@@ -47,7 +51,7 @@ namespace SmartSchool.API.Controllers
             if (professor == null) return BadRequest("Favor informar um professor");
             _repository.Add(professor);
             if (_repository.SaveChanges())
-                return Ok(professor);
+                return Created($"/api/professor/{professor.Id}", _mapper.Map<ProfessorDTO>(professor));
 
             return BadRequest("Professor não cadastrado");
         }
@@ -64,7 +68,7 @@ namespace SmartSchool.API.Controllers
 
             _repository.Update(professor);
             if (_repository.SaveChanges())
-                return Ok(professor);
+                return Created($"/api/professor/{professor.Id}", _mapper.Map<ProfessorDTO>(professor));
 
             return BadRequest("Professor não atualizado");
         }
@@ -80,7 +84,7 @@ namespace SmartSchool.API.Controllers
 
             _repository.Update(professor);
             if (_repository.SaveChanges())
-                return Ok(professor);
+                return Created($"/api/professor/{professor.Id}", _mapper.Map<ProfessorDTO>(professor));
 
             return BadRequest("Professor não atualizado");
         }

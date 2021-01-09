@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartSchool.API.Data;
+using SmartSchool.API.DTOs;
 using SmartSchool.API.Models;
 using System;
 using System.Collections.Generic;
@@ -16,10 +18,12 @@ namespace SmartSchool.API.Controllers
     public class AlunoController : ControllerBase
     {
         private readonly IRepository _repository;
+        private readonly IMapper _mapper;
 
-        public AlunoController(IRepository repository)
+        public AlunoController(IRepository repository, IMapper mapper)
         {
             _repository = repository;
+            _mapper = mapper;
         }
 
         // GET: api/<AlunoController>
@@ -27,7 +31,7 @@ namespace SmartSchool.API.Controllers
         public IActionResult Get()
         {
             var result = _repository.GetAllAlunos(true);
-            return Ok(result);
+            return Ok(_mapper.Map<IEnumerable<AlunoDTO>>(result));
         }
 
         // GET api/<AlunoController>/5
@@ -37,7 +41,7 @@ namespace SmartSchool.API.Controllers
             if (id == 0) return BadRequest("Informe um Id");
             var aluno = _repository.GetAlunoById(id, false);
             if (aluno == null) return BadRequest("Aluno não encontrado");
-            return Ok(aluno);
+            return Ok(_mapper.Map<AlunoDTO>(aluno));
         }
 
         // POST api/<AlunoController>
@@ -47,7 +51,7 @@ namespace SmartSchool.API.Controllers
             if (aluno == null) return BadRequest("Favor informar um aluno");
             _repository.Add(aluno);
             if(_repository.SaveChanges())
-                return Ok(aluno);
+                return Created($"/api/aluno/{aluno.Id}",_mapper.Map<AlunoDTO>(aluno));
             else
                 return BadRequest("Aluno não cadastrado");
         }
@@ -66,7 +70,7 @@ namespace SmartSchool.API.Controllers
 
             _repository.Update(aluno);
             if (_repository.SaveChanges())
-                return Ok(aluno);
+                return Created($"/api/aluno/{aluno.Id}", _mapper.Map<AlunoDTO>(aluno));
 
             return BadRequest("Aluno não atualizado");
         }
@@ -84,7 +88,7 @@ namespace SmartSchool.API.Controllers
 
             _repository.Update(aluno);
             if (_repository.SaveChanges())
-                return Ok(aluno);
+                return Created($"/api/aluno/{aluno.Id}", _mapper.Map<AlunoDTO>(aluno));
 
             return BadRequest("Aluno não atualizado");
         }
