@@ -15,46 +15,29 @@ namespace SmartSchool.API.Controllers
     [ApiController]
     public class AlunoController : ControllerBase
     {
+        private readonly IRepository _repository;
 
-        private readonly DataContext _context;
-
-        public AlunoController(DataContext context)
+        public AlunoController(IRepository repository)
         {
-            _context = context;
+            _repository = repository;
         }
-
 
         // GET: api/<AlunoController>
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(_context.Alunos);
+            var result = _repository.GetAllAlunos(true);
+            return Ok(result);
         }
 
         // GET api/<AlunoController>/5
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
-            var aluno = _context.Alunos.FirstOrDefault(p => p.Id == id);
+            if (id == 0) return BadRequest("Informe um Id");
+            var aluno = _repository.GetAlunoById(id, false);
             if (aluno == null) return BadRequest("Aluno não encontrado");
             return Ok(aluno);
-        }
-        [HttpGet("ByName")]
-        public IActionResult GetByName(string nome, string sobrenome)
-        {
-            if (!string.IsNullOrEmpty(nome) && !string.IsNullOrEmpty(sobrenome))
-            {
-                var filtro = _context.Alunos.FirstOrDefault(p => p.Nome == nome && p.Sobrenome == sobrenome);
-                if (filtro == null) return BadRequest("Aluno não localizado com os parametros informados!");
-                return Ok(filtro);
-            }
-            else if (string.IsNullOrEmpty(nome)) return BadRequest("Informe um nome");
-            else
-            {
-                var filtro = _context.Alunos.FirstOrDefault(p => p.Nome == nome);
-                if (filtro == null) return BadRequest("Ocorreu um erro");
-                return Ok(filtro);
-            }
         }
 
         // POST api/<AlunoController>
@@ -62,9 +45,11 @@ namespace SmartSchool.API.Controllers
         public IActionResult Post(Aluno aluno)
         {
             if (aluno == null) return BadRequest("Favor informar um aluno");
-            _context.Add(aluno);
-            _context.SaveChanges();
-            return Ok(aluno);
+            _repository.Add(aluno);
+            if(_repository.SaveChanges())
+                return Ok(aluno);
+            else
+                return BadRequest("Aluno não cadastrado");
         }
 
         // PUT api/<AlunoController>/5
@@ -73,14 +58,17 @@ namespace SmartSchool.API.Controllers
         {
             if (id == 0) return BadRequest("Favor informar o Id do aluno");
             if (aluno == null) return BadRequest("Favor informar um aluno");
-            var alu = _context.Alunos.AsNoTracking().FirstOrDefault(p => p.Id == id);
+            var alu = _repository.GetAlunoById(id, false);
             if (alu == null) return BadRequest("Aluno não encontrado");
             if (alu.Id != id) return BadRequest("Id informado não corresponde ao Id encontrado no Banco");
             if (aluno.Id == 0)
                 aluno.Id = alu.Id;
-            _context.Update(aluno);
-            _context.SaveChanges();
-            return Ok(aluno);
+
+            _repository.Update(aluno);
+            if (_repository.SaveChanges())
+                return Ok(aluno);
+
+            return BadRequest("Aluno não atualizado");
         }
 
         [HttpPatch("{id}")]
@@ -88,14 +76,17 @@ namespace SmartSchool.API.Controllers
         {
             if (id == 0) return BadRequest("Favor informar o Id do aluno");
             if (aluno == null) return BadRequest("Favor informar um aluno");
-            var alu = _context.Alunos.AsNoTracking().FirstOrDefault(p => p.Id == id);
+            var alu = _repository.GetAlunoById(id, false);
             if (alu == null) return BadRequest("Aluno não encontrado");
             if (alu.Id != id) return BadRequest("Id informado não corresponde ao Id encontrado no Banco");
             if (aluno.Id == 0)
                 aluno.Id = alu.Id;
-            _context.Update(aluno);
-            _context.SaveChanges();
-            return Ok(aluno);
+
+            _repository.Update(aluno);
+            if (_repository.SaveChanges())
+                return Ok(aluno);
+
+            return BadRequest("Aluno não atualizado");
         }
 
         // DELETE api/<AlunoController>/5
@@ -103,11 +94,14 @@ namespace SmartSchool.API.Controllers
         public IActionResult Delete(int id)
         {
             if (id == 0) return BadRequest("Favor informar o Id do aluno");
-            var aluno = _context.Alunos.FirstOrDefault(p => p.Id == id);
+            var aluno = _repository.GetAlunoById(id, false);
             if (aluno == null) return BadRequest("Aluno não encontrado.");
-            _context.Remove(aluno);
-            _context.SaveChanges();
-            return Ok(aluno);
+
+            _repository.Delete(aluno);
+            if (_repository.SaveChanges())
+                return Ok("Aluno Deletado");
+
+            return BadRequest("Aluno não Deletado");
         }
     }
 }
