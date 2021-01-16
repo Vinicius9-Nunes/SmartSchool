@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SmartSchool.API.Helpers;
 using SmartSchool.API.Models;
 using System;
 using System.Collections.Generic;
@@ -36,7 +37,7 @@ namespace SmartSchool.API.Data
         }
 
         //Métodos de Aluno
-        public Aluno[] GetAllAlunos(bool includeProfessor = false)
+        public async Task<PageList<Aluno>> GetAllAlunos(PageParams pageParams, bool includeProfessor = false)
         {
             IQueryable<Aluno> query = _context.Alunos;
 
@@ -47,9 +48,24 @@ namespace SmartSchool.API.Data
                     .ThenInclude(d => d.Professor);
             }
 
+            if (!string.IsNullOrEmpty(pageParams.Nome))
+                query = query.Where(aluno => aluno.Nome
+                                                .ToUpper()
+                                                .Contains(pageParams.Nome.ToUpper()) ||
+                                                aluno.Sobrenome
+                                                .ToUpper()
+                                                .Contains(pageParams.Nome.ToUpper()));
+
+            if (pageParams.Matricula > 0)
+                query = query.Where(aluno => aluno.Matricula == pageParams.Matricula);
+
+            if (pageParams.Ativo != null)
+                query = query.Where(aluno => aluno.Ativo == (pageParams.Ativo.Value != 0));
+
             query = query.AsNoTracking().OrderBy(c => c.Id);
 
-            return query.ToArray();
+            //return await query.ToListAsync();
+            return await PageList<Aluno>.Create(query, pageParams.PageNumber, pageParams.PageSize);
         }
 
         public Aluno[] GetAllAlunosByDisciplina(int id, bool includeProfessor = false)
